@@ -1,0 +1,441 @@
+/* ============================================================================
+   styles.css — компактная тема BearNest. Всё на CSS-переменных, смена темы =
+   переключение data-theme на <html>. Четыре темы: dark(Catppuccin), light,
+   nord, bear — соответствуют вашим Themes/*.xaml.
+   ============================================================================ */
+
+/* ── Тёмная (Catppuccin Mocha) — по умолчанию ── */
+:root, [data-theme="dark"] {
+  --bg:        #1e1e2e;
+  --bg-2:      #181825;
+  --card:      #252537;
+  --card-2:    #2a2a3c;
+  --text:      #cdd6f4;
+  --text-dim:  #a6adc8;
+  --border:    #313244;
+  --accent:    #89b4fa;
+  --accent-2:  #b4befe;
+  --green:     #a6e3a1;
+  --red:       #f38ba8;
+  --yellow:    #f9e2af;
+  --orange:    #fab387;
+  --mauve:     #cba6f7;
+  --shadow:    rgba(0,0,0,.35);
+  --btn-text:  #ffffff;
+}
+[data-theme="light"] {
+  --bg:        #eff1f5;
+  --bg-2:      #e6e9ef;
+  --card:      #ffffff;
+  --card-2:    #f2f4f8;
+  --text:      #4c4f69;
+  --text-dim:  #6c6f85;
+  --border:    #ccd0da;
+  --accent:    #1e66f5;
+  --accent-2:  #7287fd;
+  --green:     #40a02b;
+  --red:       #d20f39;
+  --yellow:    #df8e1d;
+  --orange:    #fe640b;
+  --mauve:     #8839ef;
+  --shadow:    rgba(0,0,0,.12);
+  --btn-text:  #ffffff;
+}
+[data-theme="nord"] {
+  --bg:        #2e3440;
+  --bg-2:      #272c36;
+  --card:      #3b4252;
+  --card-2:    #434c5e;
+  --text:      #eceff4;
+  --text-dim:  #d8dee9;
+  --border:    #434c5e;
+  --accent:    #88c0d0;
+  --accent-2:  #81a1c1;
+  --green:     #a3be8c;
+  --red:       #bf616a;
+  --yellow:    #ebcb8b;
+  --orange:    #d08770;
+  --mauve:     #b48ead;
+  --shadow:    rgba(0,0,0,.35);
+  --btn-text:  #ffffff;
+}
+[data-theme="bear"] {
+  --bg:        #2b2119;
+  --bg-2:      #241b14;
+  --card:      #3a2c20;
+  --card-2:    #443426;
+  --text:      #f0e6da;
+  --text-dim:  #c9b8a5;
+  --border:    #4a3728;
+  --accent:    #e0a458;
+  --accent-2:  #d98c3f;
+  --green:     #a3c586;
+  --red:       #e08a7a;
+  --yellow:    #e8c07d;
+  --orange:    #e0a458;
+  --mauve:     #c9a06a;
+  --shadow:    rgba(0,0,0,.4);
+  --btn-text:  #ffffff;
+}
+
+
+ ::-webkit-scrollbar {
+    width: 30px !important; 
+    background-color: #c1a5ef00 !important; 
+}
+ ::-webkit-scrollbar-thumb {
+    user-select: none !important; 
+    cursor: context-menu !important;
+    background-color: #c1a5ef  !important; 
+    border-radius: 15px !important;
+    border: 3px solid #4f3e6a ;
+    height: 125px !important;
+}
+
+ ::-webkit-scrollbar-thumb:hover { 
+    background-color: #29795c !important;
+    border: 3px solid #42cd96 ;
+ }
+
+ ::-webkit-scrollbar-track {
+    background: #22c2c200  !important;
+    border-radius: 18px !important;
+}
+ ::-webkit-scrollbar-corner {
+    background: transparent !important;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  user-select: none;
+  overflow: hidden;
+}
+
+svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── Титлбар ── */
+.titlebar {
+  height: 38px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 6px 0 12px;
+}
+.tb-left { display: flex; align-items: center; gap: 8px; flex: 1; height: 100%; }
+.tb-logo { font-size: 16px; }
+.tb-title { font-weight: 600; letter-spacing: .3px; }
+.tb-right { display: flex; align-items: center; gap: 4px; }
+.tb-timer { color: var(--text-dim); font-variant-numeric: tabular-nums; font-size: 12px; margin-right: 6px; }
+.tb-btn {
+  width: 30px; height: 26px; display: grid; place-items: center;
+  background: transparent; border: none; color: var(--text-dim);
+  border-radius: 6px; cursor: pointer;
+}
+.tb-btn:hover { background: var(--card); color: var(--text); }
+.tb-close:hover { background: var(--red); color: #fff; }
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: var(--card);
+}
+.status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+.status-pill.on  { color: var(--green); }
+.status-pill.on .dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.status-pill.off { color: var(--text-dim); }
+
+/* ── Основная область ── */
+.app { padding: 10px 12px; height: calc(100% - 38px); display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+.sub-card .sub-row { display: flex; justify-content: space-between; align-items: center; }
+.sub-title { font-weight: 600; }
+.sub-traffic { color: var(--accent); font-variant-numeric: tabular-nums; font-size: 12px; }
+.sub-expire { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
+
+/* ── URL row ── */
+.url-row { display: flex; gap: 8px; }
+.input-wrap { position: relative; flex: 1; }
+.in-ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-dim); width: 15px; height: 15px; }
+.input-wrap input {
+  width: 100%; height: 38px; padding: 0 12px 0 32px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 9px;
+  color: var(--text); font-size: 13px; user-select: text;
+}
+.input-wrap input:focus { outline: none; border-color: var(--accent); }
+
+/* ── Кнопки ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 38px; padding: 0 16px; border: none; border-radius: 9px;
+  background: var(--card); color: var(--text); cursor: pointer;
+  font-size: 13px; font-weight: 600; white-space: nowrap;
+  transition: filter .12s, transform .04s;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.12); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn-sm { height: 30px; padding: 0 12px; font-size: 12px; border-radius: 8px; }
+.btn-accent  { background: var(--accent); color: var(--btn-text); }
+.btn-connect { background: var(--green);  color: var(--btn-text); }
+.btn-switch  { background: var(--accent-2); color: var(--btn-text); }
+.btn-stop    { background: var(--red);    color: var(--btn-text); }
+.btn-ping    { background: var(--mauve);  color: var(--btn-text); }
+.btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+.btn-ghost.paused { border-color: var(--yellow); color: var(--yellow); }
+
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.actions .btn { flex: 1; min-width: 92px; }
+.tun-toggle {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 0 10px; height: 38px; border: 1px solid var(--border); border-radius: 9px;
+  font-weight: 600; font-size: 12px;
+}
+.tun-toggle input { accent-color: var(--accent); }
+.tun-status { color: var(--green); font-size: 11px; }
+
+.selected { color: var(--accent); font-size: 12px; min-height: 16px; padding-left: 2px; }
+
+/* ── Вкладки ── */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.tab {
+  background: transparent; border: none; color: var(--text-dim);
+  padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600;
+  border-bottom: 2px solid transparent;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.panel { display: none; flex: 1; min-height: 0; overflow: auto; }
+.panel.active { display: block; }
+/* Лог: панель — flex-колонка на всю высоту; тулбар закреплён, скроллится ТОЛЬКО лог */
+.panel[data-panel="log"].active { display: flex; flex-direction: column; overflow: hidden; }
+.panel[data-panel="log"] .log-toolbar { flex: 0 0 auto; }
+
+/* ── Серверы ── */
+.server-head {
+  display: grid; grid-template-columns: 1fr 90px 90px; gap: 8px;
+  padding: 6px 10px; color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+}
+.server-list { list-style: none; }
+.server-item {
+  display: grid; grid-template-columns: 1fr 90px 90px; gap: 8px; align-items: center;
+  padding: 9px 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent;
+}
+.server-item:hover { background: var(--card); }
+.server-item.selected { background: var(--card); border-color: var(--accent); }
+.server-item.connected { background: var(--card); border-color: var(--accent); }
+.server-item.connected .s-name { font-weight: 700; color: var(--text); }
+.s-flag {
+  display: inline-block; width: 20px; height: 15px; margin-right: 8px;
+  vertical-align: middle; border-radius: 2px; overflow: hidden; box-shadow: 0 0 0 1px var(--border);
+}
+.s-flag svg { width: 100%; height: 100%; display: block; }
+.s-badge {
+  display: inline-block; min-width: 20px; height: 15px; line-height: 15px; text-align: center;
+  margin-right: 8px; padding: 0 3px; font-size: 9px; font-weight: 700; border-radius: 3px;
+  background: var(--card-2); color: var(--text-dim); vertical-align: middle;
+}
+.s-dot {
+  display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+  margin-right: 8px; vertical-align: middle; box-sizing: border-box;
+  background: transparent; border: 2px solid transparent;
+}
+.server-item.selected .s-dot { border-color: var(--accent); }              /* выбран — кольцо */
+.server-item.connected .s-dot { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px var(--green); } /* подключён — 🟢 */
+.server-item .s-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.server-item .s-proto { color: var(--text-dim); font-size: 12px; }
+.server-item .s-ping { font-variant-numeric: tabular-nums; font-size: 12px; }
+
+/* ── Лог ── */
+.log-toolbar { display: flex; gap: 8px; align-items: center; padding: 4px 0 8px; }
+.mini-select {
+  height: 30px; background: var(--card); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px; padding: 0 8px; font-size: 12px;
+}
+.log-box {
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 9px;
+  padding: 8px 10px; font-family: "Cascadia Code", Consolas, monospace; font-size: 11.5px;
+  line-height: 1.55; flex: 1 1 auto; min-height: 0; overflow: auto; user-select: text;
+}
+.log-line { white-space: pre-wrap; word-break: break-all; }
+.log-line.err { color: var(--red); }
+.log-line.ok  { color: var(--green); }
+.log-line.bn  { color: var(--accent); }
+
+/* ── Bypass ── */
+.quick-add { display: flex; gap: 8px; margin-bottom: 8px; }
+.quick-add input {
+  flex: 1; height: 30px; padding: 0 10px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px; color: var(--text); user-select: text;
+}
+.chk-line { display: flex; align-items: center; gap: 8px; margin: 6px 0 10px; cursor: pointer; }
+.chk-line input, .setting-row input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+.field { margin-bottom: 10px; }
+.field label { display: block; color: var(--text-dim); font-size: 12px; margin-bottom: 4px; }
+textarea {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); padding: 8px 10px; font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 12px; resize: vertical; user-select: text;
+}
+textarea:focus { outline: none; border-color: var(--accent); }
+.bypass-actions { display: flex; gap: 12px; align-items: center; }
+.split-status { color: var(--green); font-size: 12px; }
+
+/* ── Настройки ── */
+.setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--border); }
+.about { margin-top: 14px; color: var(--text-dim); font-size: 11px; text-align: center; }
+
+/* ── Тост ── */
+.toast {
+  position: fixed; bottom: 18px; left: 50%; transform: translate(-50%, 30px);
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px 16px; display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 8px 30px var(--shadow); opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s; font-weight: 600; z-index: 100;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Скроллбары */
+::-webkit-scrollbar {
+   width: var(--sb-size, 8px); height: var(--sb-size, 8px); }
+::-webkit-scrollbar-thumb {
+   background: var(--sb-thumb, var(--border)); border-radius: 8px; }
+::-webkit-scrollbar-track { 
+  background: transparent; }
+
+/* ── Редактор темы: строки-контролы, цвет-инпут, модалка ── */
+.row-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.color-inp {
+  width: 34px; height: 26px; padding: 0; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--card); cursor: pointer;
+}
+.hex-inp {
+  width: 92px; height: 28px; background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); padding: 0 8px; user-select: text;
+  font-family: "Cascadia Code", Consolas, monospace; font-size: 12px; text-transform: lowercase;
+}
+.hex-inp:focus, .color-inp:focus { outline: none; border-color: var(--accent); }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center; z-index: 200;
+}
+/* атрибут hidden должен перекрывать display:flex, иначе модалка не закрывается */
+.modal-overlay[hidden] { display: none; }
+.modal {
+  width: 360px; max-width: 92vw; background: var(--card);
+  border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 20px 60px var(--shadow); overflow: hidden;
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--border); font-weight: 600;
+}
+.modal-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow: auto; }
+.color-row { display: flex; align-items: center; gap: 10px; }
+.color-row span { flex: 1; color: var(--text-dim); font-size: 13px; }
+.modal-foot { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--border); }
+
+/* ── Секция скролла и диалог имени в редакторе тем ── */
+.modal-scroll { padding: 4px 14px 12px; border-top: 1px solid var(--border); 
+  display: flex; flex-direction: column; gap: 10px; }
+.ms-row { display: flex; align-items: center; justify-content: space-between; 
+  gap: 10px; }
+.ms-row > span { color: var(--text-dim); font-size: 13px; }
+.modal-sm { width: 300px; }
+.name-inp {
+  width: 100%; height: 34px; background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); padding: 0 10px; font-size: 14px; user-select: text;
+}
+.name-inp:focus { outline: none; border-color: var(--accent); }
+
+/* ── Плавающая (перетаскиваемая) модалка редактора ── */
+.modal-overlay.floating { background: transparent; pointer-events: none; display: block; }
+.modal-overlay.floating[hidden] { display: none; } /* hidden должен перекрывать floating */
+.modal-overlay.floating .modal { pointer-events: auto; position: absolute; box-shadow: 0 24px 70px var(--shadow); }
+.modal-head { cursor: move; user-select: none; }
+
+/* ── Сортировка серверов ── */
+.server-toolbar { display: flex; gap: 8px; align-items: center; padding: 2px 2px 8px; }
+.server-head .col { cursor: pointer; user-select: none; display: inline-flex; align-items: center; }
+.server-head .col:hover { color: var(--text); }
+.server-head .col .ar { font-style: normal; color: var(--accent); font-size: 10px; }
+
+/* ── Ховер-превью цвета ── */
+.color-preview {
+  position: fixed; width: 74px; height: 40px; border-radius: 8px;
+  border: 2px solid var(--border); box-shadow: 0 8px 24px var(--shadow);
+  z-index: 300; pointer-events: none; display: flex; align-items: flex-end; justify-content: center;
+}
+.color-preview .cp-hex {
+  font-family: "Cascadia Code", Consolas, monospace; font-size: 10px;
+  background: rgba(0,0,0,.55); color: #fff; padding: 1px 4px; border-radius: 4px; margin-bottom: 3px;
+}
+.color-preview[hidden] { display: none; }
+
+/* ── Окно редактора темы (editor.html) ── */
+.ed-wrap { display: flex; flex-direction: column; height: calc(100% - 38px); }
+.ed-body { flex: 1; overflow: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.ed-scroll { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px; display: flex; flex-direction: column; gap: 10px; }
+.ed-foot { display: flex; gap: 8px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--border); }
+
+/* ── Группы в редакторе тем + корзина удаления темы ── */
+.grp-title { margin: 12px 2px 2px; color: var(--text-dim); font-size: 10px; letter-spacing: .6px; text-transform: uppercase; }
+.grp-title:first-child { margin-top: 0; }
+.icon-btn { width: 30px; height: 30px; padding: 0; display: grid; place-items: center; }
+.icon-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+/* Глобальный тултип, который создается в body */
+.global-tooltip {
+  position: fixed; /* Вырывает из любого overflow */
+  z-index: 99999999 !important; /* Всегда выше всех окон и элементов */
+  pointer-events: none; /* Чтобы не мешал кликам */
+  background: var(--bg-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 6px 20px var(--shadow);
+  opacity: 0;
+  transition: opacity 0.15s ease; /* Плавное появление */
+}
+
+.global-tooltip.visible {
+  opacity: 1;
+}
+
+/* ── Мультиподписка: сворачиваемые группы подписок ── */
+.sub-head {
+  display: grid; grid-template-columns: 18px 1fr auto auto; gap: 8px; align-items: center;
+  padding: 8px 10px; margin-top: 6px; border-radius: 8px; cursor: pointer;
+  background: var(--card); border: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 5;
+}
+.sub-head:first-child { margin-top: 0; }
+.sub-head:hover { border-color: var(--accent); }
+.sub-chev { display: inline-flex; color: var(--text-dim); transition: transform .15s; }
+.sub-chev svg { width: 14px; height: 14px; }
+.sub-head:not(.collapsed) .sub-chev { transform: rotate(90deg); }
+.sub-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub-name.busy::after { content: " …"; color: var(--accent); }
+.sub-meta { color: var(--text-dim); font-size: 11px; white-space: nowrap; }
+.sub-actions { display: inline-flex; gap: 4px; }
+.sub-btn {
+  width: 26px; height: 26px; padding: 0; display: grid; place-items: center;
+  background: transparent; border: 1px solid transparent; border-radius: 6px;
+  color: var(--text-dim); cursor: pointer;
+}
+.sub-btn:hover { border-color: var(--border); color: var(--text); background: var(--card-2); }
+.sub-btn.danger:hover { border-color: var(--red); color: var(--red); }
+.sub-btn svg { width: 13px; height: 13px; }
+.sub-server-item { margin-left: 14px; }

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Редактор темы</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="titlebar" data-tauri-drag-region>
+    <div class="tb-left" data-tauri-drag-region>
+      <span class="tb-logo">🎨</span>
+      <span class="tb-title" data-tauri-drag-region data-i18n="EditorTitle">Редактор темы</span>
+    </div>
+    <div class="tb-right">
+      <button id="edClose" class="tb-btn tb-close" title="Закрыть">
+        <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="ed-wrap">
+    <div class="ed-body">
+      <div id="edColorRows"></div>
+      <div class="ed-scroll">
+        <div class="ms-row">
+          <span data-i18n="ScrollThickness">Толщина скролла</span>
+          <select id="edSbSize" class="mini-select">
+            <option value="6" data-i18n="SbThin">Тонкий</option>
+            <option value="8" data-i18n="SbNormal">Обычный</option>
+            <option value="12" data-i18n="SbWide">Широкий</option>
+          </select>
+        </div>
+        <div class="ms-row">
+          <span data-i18n="ScrollColor">Цвет скролла</span>
+          <div class="row-controls">
+            <select id="edSbColorMode" class="mini-select">
+              <option value="neutral" data-i18n="SbNeutral">Нейтральный</option>
+              <option value="accent" data-i18n="SbAccent">Акцент</option>
+              <option value="custom" data-i18n="SbCustom">Свой</option>
+            </select>
+            <input id="edSbColorCustom" type="color" class="color-inp" value="#89b4fa" hidden />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ed-foot">
+      <button id="edDelete" class="btn btn-ghost btn-sm" hidden><span data-i18n="BtnDelete">Удалить</span></button>
+      <button id="edReset" class="btn btn-ghost btn-sm"><span data-i18n="BtnReset">Сбросить</span></button>
+      <div style="flex:1"></div>
+      <button id="edCancel" class="btn btn-ghost btn-sm"><span data-i18n="BtnCancel">Отмена</span></button>
+      <button id="edSave" class="btn btn-accent btn-sm"><span data-i18n="BtnSave2">Сохранить</span></button>
+    </div>
+  </div>
+
+  <!-- Диалог названия темы -->
+  <div id="edNameModal" class="modal-overlay" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-head"><span data-i18n="ThemeName">Название темы</span></div>
+      <div class="modal-body">
+        <input id="edNameInput" class="name-inp" type="text" maxlength="24" spellcheck="false" placeholder="My Theme" />
+      </div>
+      <div class="modal-foot">
+        <div style="flex:1"></div>
+        <button id="edNameCancel" class="btn btn-ghost btn-sm"><span data-i18n="BtnCancel">Отмена</span></button>
+        <button id="edNameOk" class="btn btn-accent btn-sm"><span data-i18n="BtnOk">ОК</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ховер-превью цвета -->
+  <div id="edPreview" class="color-preview" hidden><span class="cp-hex"></span></div>
+
+  <script src="i18n.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>

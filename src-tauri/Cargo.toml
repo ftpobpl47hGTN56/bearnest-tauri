@@ -1,0 +1,58 @@
+[package]
+name = "BearNest-VPN-client-Rust-Tauri"
+version = "2.10.0"
+description = "VPN client (Rust + Tauri port) v2.10.0"
+authors = ["gullampis810"]
+edition = "2021"
+
+[lib]
+name = "bearnest_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "devtools"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "process", "io-util", "time", "sync"] }
+# reqwest без openssl: rustls + поддержка SOCKS5 (тянем подписку через локальный xray)
+reqwest = { version = "0.12", default-features = false, features = ["socks", "rustls-tls", "http2"] }
+base64 = "0.22"
+url = "2"
+urlencoding = "2"
+# rusqlite bundled — своя sqlite, системная не нужна
+rusqlite = { version = "0.32", features = ["bundled"] }
+dirs = "5"
+socket2 = "0.5"
+# rfd — нативные системные диалоги «Сохранить как / Открыть» (Win32/COM,
+# без GTK на Windows). Используется в portability.rs для экспорта/импорта.
+rfd = "0.15"
+netdev = "0.28"
+# нативные уведомления Windows (Action Center) — сбой туннеля, автопереключение
+tauri-plugin-notification = "2"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+# прямая отправка WinRT-тостов из Rust (notify.rs) — запасной путь,
+# если window.__TAURI__.notification недоступен в рантайме
+tauri-winrt-notification = "0.8"
+# COM-доступ к shell32 (IShellLinkW/IPropertyStore) — регистрация AppUserModelID,
+# без него Windows не показывает приложение в «Параметры → Уведомления»
+windows = { version = "0.62", features = [
+  "Win32_Foundation",
+  "Win32_System_Com",
+  "Win32_System_Com_StructuredStorage",
+  "Win32_System_Variant",
+  "Win32_UI_Shell",
+  "Win32_UI_Shell_PropertiesSystem",
+  "Win32_Storage_EnhancedStorage",
+] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

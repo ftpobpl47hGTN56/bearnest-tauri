@@ -1,0 +1,22 @@
+# Rust
+/src-tauri/target
+Cargo.lock
+
+# Ядро (тяжёлые бинарники — держим вне репозитория)
+/src-tauri/core/xray.exe
+/src-tauri/core/tun2socks.exe
+/src-tauri/core/wintun.dll
+/src-tauri/core/geoip.dat
+/src-tauri/core/geosite.dat
+/src-tauri/core/config.json
+
+# Tauri generated
+/src-tauri/gen
+
+# Frontend
+node_modules/
+dist/
+
+# Windows junk
+desktop.ini
+folderico-*.ico

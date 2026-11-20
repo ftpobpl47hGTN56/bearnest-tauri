@@ -1,0 +1,14 @@
+Скопируйте сюда файлы ядра из рабочего C#-проекта
+(C:\Users\gullampis810\source\repos\VpnClient\core\):
+
+  xray.exe
+  tun2socks.exe
+  wintun.dll
+  geoip.dat
+  geosite.dat
+
+Эти файлы НЕ включены в архив, потому что они уже есть у вас
+(суммарно ~77 МБ). Пути в коде (state.rs / lib.rs) ищут их именно тут:
+  • при `cargo tauri dev`  — берётся ./src-tauri/core/
+  • в собранном приложении — папка core\ рядом с BearNest.exe
+    (tauri.conf.json → bundle.resources кладёт core\* в установку).
