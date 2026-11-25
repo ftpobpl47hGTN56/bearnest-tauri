@@ -52,6 +52,9 @@ async function setSetting(key, value) {
 
 // ── ЛОГ ──────────────────────────────────────────────────────────────────────
 let logFilter = "all";
+const LOG_MAX_LINES = 500;
+const logHistory = [];
+
 function classifyLog(line) {
   const l = line.toLowerCase();
   if (l.includes("error") || l.includes("❌") || l.includes("failed") || l.includes("упал")) return "err";
@@ -59,20 +62,37 @@ function classifyLog(line) {
   if (line.includes("[BearNest]") || line.includes("[tun2socks]")) return "bn";
   return "";
 }
+
 function matchesFilter(line) {
   if (logFilter === "all") return true;
   if (logFilter === "bearnest") return line.includes("[BearNest]") || line.includes("[tun2socks]");
   if (logFilter === "error") return classifyLog(line) === "err";
   return true;
 }
-function renderLine(line) {
+
+function appendFilteredLine(box, line) {
   if (!matchesFilter(line)) return;
-  const box = $("logBox");
   const div = document.createElement("div");
   div.className = "log-line " + classifyLog(line);
   div.textContent = line;
   box.appendChild(div);
-  while (box.childElementCount > 500) box.removeChild(box.firstChild);
+  while (box.childElementCount > LOG_MAX_LINES) box.removeChild(box.firstChild);
+}
+
+function renderLine(line) {
+  const box = $("logBox");
+  if (!box) return;
+  appendFilteredLine(box, line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function rerenderLogs() {
+  const box = $("logBox");
+  if (!box) return;
+  box.innerHTML = "";
+  for (const line of logHistory) {
+    appendFilteredLine(box, line);
+  }
   box.scrollTop = box.scrollHeight;
 }
 
@@ -82,11 +102,14 @@ const pausedBuffer = [];
 const ICON_PAUSE = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
 const ICON_PLAY = '<polygon points="6 4 20 12 6 20 6 4"/>';
 
-function addLog(line) {
+function addLog(line, fromBackend = false) {
+  logHistory.push(line);
+  if (logHistory.length > LOG_MAX_LINES) logHistory.shift();
+
   if (logPaused) {
     pausedBuffer.push(line);
-    if (!fromBackend) invoke("log_write", { line }).catch(() => {}); // в файл — до паузы/фильтра
-    if (pausedBuffer.length > 500) pausedBuffer.shift();
+    if (!fromBackend) invoke("log_write", { line }).catch(() => {});
+    if (pausedBuffer.length > LOG_MAX_LINES) pausedBuffer.shift();
     setPauseLabel(true);
     return;
   }
@@ -1321,9 +1344,17 @@ async function init() {
     on("btnSwitch", "click", doSwitch);
     on("btnOpenLogs", "click", () => invoke("open_logs_dir").catch((e) => addLog("[BearNest] ❌ open logs: " + e)));
     on("btnPing", "click", doPing);
-    on("btnClearLog", "click", () => ($("logBox").innerHTML = ""));
+    on("btnClearLog", "click", () => {
+      logHistory.length = 0;
+      pausedBuffer.length = 0;
+      $("logBox").innerHTML = "";
+      setPauseLabel(logPaused);
+    });
     on("btnPauseLog", "click", togglePause);
-    on("logFilter", "change", (e) => (logFilter = e.target.value));
+    on("logFilter", "change", (e) => {
+      logFilter = e.target.value;
+      rerenderLogs();
+    });
     on("btnAddDomain", "click", () => {
       const v = $("quickDomain").value.trim();
       if (!v) return;
