@@ -423,6 +423,7 @@ textarea:focus { outline: none; border-color: var(--accent); }
 }
 .sub-head:first-child { margin-top: 0; }
 .sub-head:hover { border-color: var(--accent); }
+.sub-head.disabled { opacity: 0.62; }
 .sub-chev { display: inline-flex; color: var(--text-dim); transition: transform .15s; }
 .sub-chev svg { width: 14px; height: 14px; }
 .sub-head:not(.collapsed) .sub-chev { transform: rotate(90deg); }
@@ -436,6 +437,9 @@ textarea:focus { outline: none; border-color: var(--accent); }
   color: var(--text-dim); cursor: pointer;
 }
 .sub-btn:hover { border-color: var(--border); color: var(--text); background: var(--card-2); }
+.sub-btn.on { color: var(--green); }
+.sub-btn.on:hover { border-color: var(--green); color: var(--green); }
 .sub-btn.danger:hover { border-color: var(--red); color: var(--red); }
 .sub-btn svg { width: 13px; height: 13px; }
 .sub-server-item { margin-left: 14px; }
+.sub-server-item.disabled { opacity: 0.45; }

@@ -29,18 +29,22 @@ pub fn log_path() -> PathBuf {
 }
 
 /// Дописать строку в диагностический лог (создаёт папку при первом вызове).
+/// Дописать строку в диагностический лог (создаёт папку при первом вызове).
 pub fn log_line(msg: &str) {
     use std::io::Write;
     let p = log_path();
     if let Some(dir) = p.parent() {
         let _ = std::fs::create_dir_all(dir);
     }
+
+    // не даём файлу расти бесконечно: больше 1 МБ — начинаем заново
+    if std::fs::metadata(&p).map(|m| m.len() > 1_000_000).unwrap_or(false) {
+        let _ = std::fs::rename(&p, p.with_extension("log.old"));
+    }
+
     if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&p) {
-        let secs = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
-        let _ = writeln!(f, "[{secs}] {msg}");
+        let ts = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
+        let _ = writeln!(f, "[{ts}] {msg}");
     }
 }
 

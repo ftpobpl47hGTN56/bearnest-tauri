@@ -85,6 +85,7 @@ const ICON_PLAY = '<polygon points="6 4 20 12 6 20 6 4"/>';
 function addLog(line) {
   if (logPaused) {
     pausedBuffer.push(line);
+    if (!fromBackend) invoke("log_write", { line }).catch(() => {}); // в файл — до паузы/фильтра
     if (pausedBuffer.length > 500) pausedBuffer.shift();
     setPauseLabel(true);
     return;
@@ -310,10 +311,13 @@ function sortedServers(sub) {
   return arr;
 }
 // Пересобрать плоский список servers из подписок + восстановить selectedIndex.
+function subEnabled(sub) { return !sub || sub.enabled !== false; }
+
 function refreshFlat() {
   servers = [];
   subs.forEach((sub) => {
     (sub.servers || []).forEach((s, i) => { s._subId = sub.id; if (s._ord === undefined) s._ord = i; });
+    if (!subEnabled(sub)) return;
     servers.push(...sortedServers(sub));
   });
   if (selectedName) selectedIndex = servers.findIndex((s) => s.name === selectedName && s._subId === selectedSubId);
@@ -342,6 +346,7 @@ function hostFromUrl(u) { try { return new URL(u).host; } catch (_) { return "";
 function persistSubs() {
   const lite = subs.map((s) => ({
     id: s.id, name: s.name, url: s.url, collapsed: !!s.collapsed,
+    enabled: s.enabled !== false,
     info: s.info || null, servers: s.servers || [],
   }));
   setSetting("subscriptions", JSON.stringify(lite));
@@ -362,6 +367,7 @@ async function loadSubs() {
           name: s.name || "",
           url: s.url,
           collapsed: !!s.collapsed,
+          enabled: s.enabled !== false,
           info: s.info || null,
           servers: Array.isArray(s.servers) ? s.servers : [],
         }));
@@ -370,7 +376,7 @@ async function loadSubs() {
   }
   if (!subs.length) {
     const url = (await getSetting("sub_url")) || "";
-    if (url) subs = [{ id: newSubId(), name: "", url, collapsed: false, info: null, servers: [] }];
+    if (url) subs = [{ id: newSubId(), name: "", url, collapsed: false, enabled: true, info: null, servers: [] }];
   }
   subs.forEach((sub) => (sub.servers || []).forEach((s, i) => { s._ord = i; s._subId = sub.id; }));
 }
@@ -412,7 +418,8 @@ function cloneSub(id) {
   const orig = subs[i];
   const copy = JSON.parse(JSON.stringify({
     id: orig.id, name: orig.name, url: orig.url,
-    collapsed: false, info: orig.info, servers: orig.servers,
+    collapsed: false, enabled: orig.enabled !== false,
+    info: orig.info, servers: orig.servers,
   }));
   copy.id = newSubId();
   const base = (orig.name || hostFromUrl(orig.url) || orig.url) + " — " + I18N.t("SubCopy");
@@ -425,6 +432,28 @@ function cloneSub(id) {
   renderServers();
   showToast("⧉", I18N.t("SubCloned"));
   addLog(`[BearNest] ⧉ ${name}`);
+}
+
+// Включить или выключить подписку. Выключенная остаётся в списке,
+// но её серверы не пингуются, не выбираются и не участвуют в автопереключении.
+async function toggleSub(id) {
+  const sub = subs.find((s) => s.id === id);
+  if (!sub) return;
+  sub.enabled = sub.enabled === false;
+  const on = subEnabled(sub);
+  if (!on) {
+    if (selectedSubId === id) {
+      selectedSubId = null; selectedName = null; selectedIndex = -1;
+      $("selectedServer").textContent = "";
+      setSetting("last_server", "");
+      updateSubPanelFor(null);
+    }
+    if (connectedSubId === id) await doDisconnect();
+  }
+  persistSubs();
+  renderServers();
+  showToast(on ? "▶" : "⏸", I18N.t(on ? "SubEnabled" : "SubDisabled"));
+  addLog(`[BearNest] ${on ? "▶" : "⏸"} ${sub.name || sub.url}`);
 }
 
 // Удалить подписку вместе с её серверами.
@@ -460,6 +489,7 @@ async function restoreSelection() {
 function subMetaText(sub) {
   const n = (sub.servers || []).length;
   let t = `${n} ${I18N.t("SubServers")}`;
+  if (!subEnabled(sub)) t = `${I18N.t("SubOff")} • ${t}`;
   const info = sub.info;
   if (info && (info.upload || info.download)) {
     const used = (info.upload || 0) + (info.download || 0);
@@ -470,6 +500,7 @@ function subMetaText(sub) {
 }
 
 const SVG_CHEV = '<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
+const SVG_POWER = '<svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>';
 const SVG_REFRESH = '<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
 const SVG_CLONE = '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 const SVG_TRASH = '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
@@ -481,12 +512,14 @@ function renderServers() {
   subs.forEach((sub) => {
     // ── Заголовок подписки (клик = свернуть/развернуть) ──
     const head = document.createElement("li");
-    head.className = "sub-head" + (sub.collapsed ? " collapsed" : "");
+    const on = subEnabled(sub);
+    head.className = "sub-head" + (sub.collapsed ? " collapsed" : "") + (on ? "" : " disabled");
     head.innerHTML =
       `<span class="sub-chev">${SVG_CHEV}</span>` +
       `<span class="sub-name${sub._busy ? " busy" : ""}" title="${escapeHtml(sub.url)}">${escapeHtml(sub.name || hostFromUrl(sub.url) || sub.url)}</span>` +
       `<span class="sub-meta">${escapeHtml(subMetaText(sub))}</span>` +
       `<span class="sub-actions">` +
+        `<button class="sub-btn${on ? " on" : ""}" data-act="toggle" data-tip="${I18N.t(on ? "TipSubDisable" : "TipSubEnable")}">${SVG_POWER}</button>` +
         `<button class="sub-btn" data-act="refresh" data-tip="${I18N.t("TipSubRefresh")}">${SVG_REFRESH}</button>` +
         `<button class="sub-btn" data-act="clone" data-tip="${I18N.t("TipSubClone")}">${SVG_CLONE}</button>` +
         `<button class="sub-btn danger" data-act="delete" data-tip="${I18N.t("TipSubDelete")}">${SVG_TRASH}</button>` +
@@ -495,7 +528,8 @@ function renderServers() {
       const actBtn = e.target.closest("[data-act]");
       if (actBtn) {
         e.stopPropagation();
-        if (actBtn.dataset.act === "refresh") refreshSub(sub.id);
+        if (actBtn.dataset.act === "toggle") toggleSub(sub.id);
+        else if (actBtn.dataset.act === "refresh") refreshSub(sub.id);
         else if (actBtn.dataset.act === "clone") cloneSub(sub.id);
         else if (actBtn.dataset.act === "delete") deleteSub(sub.id);
         return;
@@ -513,13 +547,16 @@ function renderServers() {
       const isSel = s._subId === selectedSubId && s.name === selectedName;
       const isConn = connectedName && s.name === connectedName && s._subId === connectedSubId;
       const li = document.createElement("li");
-      li.className = "server-item sub-server-item" + (isSel ? " selected" : "") + (isConn ? " connected" : "");
+      li.className = "server-item sub-server-item" + (on ? "" : " disabled") + (isSel ? " selected" : "") + (isConn ? " connected" : "");
       const parts = serverParts(s.name || s.address);
       li.innerHTML =
         `<span class="s-name"><span class="s-dot"></span>${parts.flag}${escapeHtml(parts.rest)}</span>` +
         `<span class="s-proto">${escapeHtml(s.protocol)}</span>` +
         `<span class="s-ping">${pingDisplay(s.pingMs)}</span>`;
-      li.addEventListener("click", () => selectServer(i));
+      li.addEventListener("click", () => {
+        if (!on) { showToast("⏸", I18N.t("SubDisabled")); return; }
+        selectServer(i);
+      });
       ul.appendChild(li);
     });
   });
@@ -571,7 +608,7 @@ async function doLoad() {
     let sub = subs.find((s) => s.url === url);
     const isNew = !sub;
     if (!sub) {
-      sub = { id: newSubId(), name: "", url, collapsed: false, info: null, servers: [] };
+      sub = { id: newSubId(), name: "", url, collapsed: false, enabled: true, info: null, servers: [] };
       subs.push(sub);
     }
     const ok = await fetchSub(sub);
@@ -832,13 +869,13 @@ function updateSubPanelFor(sub) {
 
 // ── СОБЫТИЯ БЭКЕНДА ───────────────────────────────────────────────────────────
 async function wireEvents() {
-  await listen("log", (e) => addLog(e.payload));
+  listen("log", (e) => addLog(e.payload, true));
   await listen("status", (e) => {
     const on = e.payload === true;
     setConnectedUI(on);
     if (on) {
       if (!connectTime) startTimer();
-      startHealthMonitor();   // периодическая диагностика живости
+      startHealthMonitor();   // периодическая диагностика состояния жизни
       checkAfterConnect();    // разовая проверка сразу после подключения
     } else {
       stopTimer();
@@ -1282,6 +1319,7 @@ async function init() {
     on("btnConnect", "click", doConnect);
     on("btnDisconnect", "click", doDisconnect);
     on("btnSwitch", "click", doSwitch);
+    on("btnOpenLogs", "click", () => invoke("open_logs_dir").catch((e) => addLog("[BearNest] ❌ open logs: " + e)));
     on("btnPing", "click", doPing);
     on("btnClearLog", "click", () => ($("logBox").innerHTML = ""));
     on("btnPauseLog", "click", togglePause);
@@ -1388,7 +1426,7 @@ async function init() {
     applyScroll(scrollSize, scrollMode, scrollCustom);
 
     // Догружаем подписки без кэша серверов (например, только что мигрированную)
-    const needFetch = subs.filter((s) => !(s.servers || []).length);
+    const needFetch = subs.filter((s) => subEnabled(s) && !(s.servers || []).length);
     for (const sub of needFetch) await fetchSub(sub);
     if (needFetch.length) { refreshFlat(); renderServers(); restoreSelection(); }
   } catch (e) {

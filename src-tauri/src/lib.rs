@@ -16,6 +16,7 @@ mod notify; // прямая отправка WinRT-тостов + диагнос
 mod xcore;
 mod models;
 mod pinger;
+mod logger;
 mod portability; // экспорт/импорт настроек и тем через нативный «Проводник»
 mod selftest;    // диагностика соединения (self-test через локальный SOCKS)
 mod state;
@@ -52,6 +53,7 @@ fn resolve_core_dir() -> PathBuf {
 // Меню на правый клик; левый клик — показать/спрятать окно.
 // Пункты «Подключить/Отключить» шлют событие во фронтенд, чтобы переиспользовать
 // уже готовую логику doConnect()/doDisconnect() (там выбор сервера, split и т.д.).
+
 fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
     use tauri::menu::{MenuBuilder, MenuItemBuilder};
     use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -125,8 +127,10 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+
 pub fn run() {
-    tauri::Builder::default()
+    logger::init(); // первой строкой, до aumid::init()
+    let app = tauri::Builder::default() 
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             // Регистрируем AppUserModelID (процесс + ярлык в меню «Пуск»),
@@ -184,7 +188,16 @@ pub fn run() {
             // ── нативные уведомления Windows (Action Center) ──
             notify::notify_native,
             notify::notify_diag,
+            commands::log_write, // ← если ещё нет
+            commands::open_logs_dir,   // ← добавить
+
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running BearNest");
+        .build(tauri::generate_context!())
+        .expect("error while building BearNest");
+
+        app.run(|_app, event| {
+            if let tauri::RunEvent::Exit = event {
+                logger::shutdown();
+            }
+        });
 }

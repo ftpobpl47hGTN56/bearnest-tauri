@@ -23,7 +23,8 @@ const SOCKS_PORT: u16 = 19808;
 // ── Колбэки эмита событий на фронтенд ────────────────────────────────────────
 fn log_sink(app: &AppHandle) -> LogFn {
     let app = app.clone();
-    Arc::new(move |line: String| {
+   Arc::new(move |line: String| {
+        crate::logger::write(&line); // ← новое
         let _ = app.emit("log", line);
     })
 }
@@ -271,4 +272,16 @@ pub fn cleanup_blocking(app: &AppHandle) {
         }
         let _ = &state; // подавляем предупреждение о неиспользовании на не-Windows
     }
+}
+
+// строки, которые родились во фронтенде (self-test и т.п.)
+#[tauri::command]
+pub fn log_write(line: String) { crate::logger::write(&line); }
+
+#[tauri::command]
+pub fn open_logs_dir() -> Result<(), String> {
+    let dir = crate::logger::log_dir();
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    std::process::Command::new("explorer.exe").arg(dir).spawn().map_err(|e| e.to_string())?;
+    Ok(())
 }
