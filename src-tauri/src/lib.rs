@@ -72,7 +72,7 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
         .build()?;
 
     let mut builder = TrayIconBuilder::with_id("bearnest-tray")
-        .tooltip("BearNest VPN Tauri+Rust v2.10.0")
+        .tooltip(concat!("BearNest VPN Tauri+Rust v", env!("CARGO_PKG_VERSION")))
         .menu(&menu)
         // меню — только на правый клик; левый обрабатываем сами (тоггл окна)
         .show_menu_on_left_click(false)
@@ -143,6 +143,12 @@ pub fn run() {
             app.manage(st);
             build_tray(app.handle())?;
 
+            // Startup sweep: подчистить хвосты аварийного прошлого запуска —
+            // осиротевшие tun2socks/xray, leftover /1-маршруты, прокси-хвост
+            // на 127.0.0.1:19809. Безопасно, если чистить нечего.
+            #[cfg(windows)]
+            tauri::async_runtime::spawn(tun::startup_sweep());
+
             // Сплеш-заставка: показываем splash 2.5 сек, затем прячем его и
             // открываем главное окно (оно стартует скрытым, visible:false).
             let handle = app.handle().clone();
@@ -188,9 +194,9 @@ pub fn run() {
             // ── нативные уведомления Windows (Action Center) ──
             notify::notify_native,
             notify::notify_diag,
-            commands::log_write, // ← если ещё нет
+                       commands::log_write, // ← если ещё нет
             commands::open_logs_dir,   // ← добавить
-
+            commands::app_version,
         ])
         .build(tauri::generate_context!())
         .expect("error while building BearNest");
