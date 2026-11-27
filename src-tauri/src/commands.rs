@@ -285,3 +285,7 @@ pub fn open_logs_dir() -> Result<(), String> {
     std::process::Command::new("explorer.exe").arg(dir).spawn().map_err(|e| e.to_string())?;
     Ok(())
 }
+
+// версия приложения для фронтенда (источник истины — Cargo.toml)
+#[tauri::command]
+pub fn app_version() -> &'static str { env!("CARGO_PKG_VERSION") }

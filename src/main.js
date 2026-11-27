@@ -8,6 +8,8 @@ const T = window.__TAURI__;
 const invoke = T.core.invoke;
 const listen = T.event.listen;
 const appWindow = T.window.getCurrentWindow();
+// версия приложения (источник истины — Cargo.toml; подтягивается из Rust)
+let APP_VERSION = "0.0.0";
 
 // ── Состояние UI (сервера и выбор живут на фронте, как в WPF) ────────────────
 // МУЛЬТИПОДПИСКА: subs — источник правды (список подписок, каждая со своими
@@ -52,8 +54,9 @@ async function setSetting(key, value) {
 
 // ── ЛОГ ──────────────────────────────────────────────────────────────────────
 let logFilter = "all";
-const LOG_MAX_LINES = 500;
-const logHistory = [];
+const LOG_MAX_LINES = 500;     // строк в окне лога
+const LOG_HISTORY_MAX = 50000; // строк в истории: флуд xray вытесняет строки очень быстро, 5000 не хватало
+const logHistory = [];         // [{t:"HH:MM:SS", line}] — полная история с метками времени
 
 function classifyLog(line) {
   const l = line.toLowerCase();
@@ -70,19 +73,29 @@ function matchesFilter(line) {
   return true;
 }
 
-function appendFilteredLine(box, line) {
-  if (!matchesFilter(line)) return;
+function nowStamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+function appendFilteredLine(box, entry) {
+  if (!matchesFilter(entry.line)) return;
   const div = document.createElement("div");
-  div.className = "log-line " + classifyLog(line);
-  div.textContent = line;
+  div.className = "log-line " + classifyLog(entry.line);
+  const ts = document.createElement("span");
+  ts.className = "log-ts";
+  ts.textContent = entry.t;
+  div.appendChild(ts);
+  div.appendChild(document.createTextNode(" " + entry.line));
   box.appendChild(div);
   while (box.childElementCount > LOG_MAX_LINES) box.removeChild(box.firstChild);
 }
 
-function renderLine(line) {
+function renderLine(entry) {
   const box = $("logBox");
   if (!box) return;
-  appendFilteredLine(box, line);
+  appendFilteredLine(box, entry);
   box.scrollTop = box.scrollHeight;
 }
 
@@ -90,8 +103,8 @@ function rerenderLogs() {
   const box = $("logBox");
   if (!box) return;
   box.innerHTML = "";
-  for (const line of logHistory) {
-    appendFilteredLine(box, line);
+  for (const entry of logHistory) {
+    appendFilteredLine(box, entry);
   }
   box.scrollTop = box.scrollHeight;
 }
@@ -103,8 +116,8 @@ const ICON_PAUSE = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" 
 const ICON_PLAY = '<polygon points="6 4 20 12 6 20 6 4"/>';
 
 function addLog(line, fromBackend = false) {
-  logHistory.push(line);
-  if (logHistory.length > LOG_MAX_LINES) logHistory.shift();
+  logHistory.push({ t: nowStamp(), line });
+  if (logHistory.length > LOG_HISTORY_MAX) logHistory.shift();
 
   if (logPaused) {
     pausedBuffer.push(line);
@@ -113,7 +126,7 @@ function addLog(line, fromBackend = false) {
     setPauseLabel(true);
     return;
   }
-  renderLine(line);
+  renderLine(logHistory[logHistory.length - 1]);
 }
 function setPauseLabel(paused) {
   const btn = $("btnPauseLog");
@@ -134,7 +147,7 @@ function togglePause() {
   $("btnPauseLog").classList.toggle("paused", logPaused);
   if (!logPaused) {
     const buffered = pausedBuffer.splice(0, pausedBuffer.length);
-    buffered.forEach(renderLine);
+    buffered.forEach((line) => renderLine({ t: nowStamp(), line }));
   }
   setPauseLabel(logPaused);
 }
@@ -1142,7 +1155,7 @@ async function exportSettings() {
     const payload = {
       app: "BearNest",
       kind: "settings",
-      version: "2.10.0",
+      version: APP_VERSION,
       exportedAt: new Date().toISOString(),
       settings,
     };
@@ -1235,7 +1248,7 @@ async function exportTheme() {
     const payload = {
       app: "BearNest",
       kind: "theme",
-      version: "2.10.0",
+      version: APP_VERSION,
       name,
       vars,
     };
@@ -1374,7 +1387,17 @@ async function init() {
       }
     });
     on("themeSelect", "change", (e) => { applyTheme(e.target.value); setSetting("theme", e.target.value); });
-    on("langSelect", "change", (e) => { I18N.apply(e.target.value); setSetting("lang", e.target.value); setPauseLabel(logPaused); setConnectedUI(connected); renderServers(); });
+    // Язык: две цветные кнопки с SVG-флагами (эмодзи-флаги на Windows не цветные)
+    const applyLang = (lang) => {
+      I18N.apply(lang);
+      setSetting("lang", lang);
+      document.querySelectorAll(".lang-btn").forEach((b) => b.classList.toggle("active", b.id === "lang" + lang.charAt(0).toUpperCase() + lang.slice(1)));
+      setPauseLabel(logPaused);
+      setConnectedUI(connected);
+      renderServers();
+    };
+    on("langRu", "click", () => applyLang("ru"));
+    on("langEn", "click", () => applyLang("en"));
     on("chkTun", "change", async (e) => {
       const wantTun = e.target.checked;
       await setSetting("tun_mode", wantTun ? "true" : "false");
@@ -1416,12 +1439,17 @@ async function init() {
 
     // 2) Ждём готовности бэкенда (state + IPC), затем — всё, что использует invoke/listen
     await waitBackendReady();
+    try {
+      APP_VERSION = await invoke("app_version");
+      $("tbTitle").textContent += " v" + APP_VERSION;
+      document.title += " v" + APP_VERSION;
+    } catch (_) {}
     await wireEditorBridge();
     await wireEvents();
     await initNotifications(); // разрешение на нативные уведомления Windows
 
     // 3) Язык + темы + настройки (getSetting устойчив к сбоям)
-    I18N.apply((await getSetting("lang")) || "ru");
+    applyLang((await getSetting("lang")) || "ru");
     await loadCustomThemes();
     activeTheme = (await getSetting("theme")) || "dark";
     rebuildThemeSelect();

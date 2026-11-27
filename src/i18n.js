@@ -271,7 +271,5 @@ window.I18N = {
     document.querySelectorAll("[data-tip-i18n]").forEach((el) => {
       el.setAttribute("data-tip", this.t(el.getAttribute("data-tip-i18n")));
     });
-    const sel = document.getElementById("langSelect");
-    if (sel) sel.value = this.lang;
   },
 };
